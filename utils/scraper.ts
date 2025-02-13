@@ -78,9 +78,9 @@ export async function scrapeUrl(url: string, maxRetries = 3): Promise<ScrapedDat
 
   while (retries < maxRetries) {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-      const proxyUrl = new URL("/api/proxy", baseUrl)
-      console.log("Base URL:", baseUrl)
+      const proxyBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+      const proxyUrl = new URL("/api/proxy", proxyBaseUrl)
+      console.log("Base URL:", proxyBaseUrl)
       console.log("Proxy URL:", proxyUrl.toString())
       const response = await fetch(proxyUrl.toString())
 
@@ -99,7 +99,8 @@ export async function scrapeUrl(url: string, maxRetries = 3): Promise<ScrapedDat
         xmlMode: false,
       })
 
-      const baseUrl = parse(url).protocol + "//" + parse(url).host
+      const parsedUrl = parse(url)
+      const baseUrl = parsedUrl.protocol + "//" + parsedUrl.host
 
       // Remove unwanted elements
       $("script, style, .noprint, .reference, .error").remove()
@@ -125,7 +126,7 @@ export async function scrapeUrl(url: string, maxRetries = 3): Promise<ScrapedDat
       }
 
       // Get all links
-      pageData.links = getAllLinks($, baseUrl)
+      pageData.links = getAllLinks($, parsedUrl.protocol + "//" + parsedUrl.host)
 
       // Extract images
       $("img").each((_, element) => {
@@ -133,7 +134,9 @@ export async function scrapeUrl(url: string, maxRetries = 3): Promise<ScrapedDat
         const src = img.attr("src")
         if (src && !src.includes("Special:")) {
           try {
-            const fullSrc = src.startsWith("http") ? src : new URL(src, baseUrl).toString()
+            const fullSrc = src.startsWith("http")
+              ? src
+              : new URL(src, parsedUrl.protocol + "//" + parsedUrl.host).toString()
             const alt = img.attr("alt")?.trim() || ""
             pageData.images.push({ src: fullSrc, alt })
           } catch (e) {

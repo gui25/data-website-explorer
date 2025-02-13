@@ -60,9 +60,9 @@
     "zod": "^3.24.1",
     "reactflow": "latest",
     "react-tagcloud": "latest",
+    "axios": "latest",
     "cheerio": "latest",
     "url": "latest",
-    "axios": "latest",
     "proxy-chain": "latest",
     "http": "latest",
     "http-proxy": "latest"
