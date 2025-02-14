@@ -14,10 +14,11 @@ import TableNode from "./table-node"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import WordCloud from "./word-cloud"
 import QuickJump from "./quick-jump"
 import TextAnalysis from "./text-analysis"
-import { Download } from "lucide-react"
+import { Download, ChevronDown, ChevronUp, AlignLeft } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { ZoomIn, ZoomOut, Maximize } from "lucide-react"
 
 const nodeTypes = { table: TableNode }
 
@@ -48,10 +49,11 @@ interface DatabaseVisualizerProps {
 const Flow: React.FC<DatabaseVisualizerProps> = ({ data }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
-  const { fitView } = useReactFlow()
+  const reactFlowInstance = useReactFlow()
   const [filter, setFilter] = useState("all")
   const [search, setSearch] = useState("")
   const [sortBy, setSortBy] = useState("default")
+  const [isTextAnalysisOpen, setIsTextAnalysisOpen] = useState(true)
 
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
 
@@ -187,10 +189,10 @@ const Flow: React.FC<DatabaseVisualizerProps> = ({ data }) => {
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      fitView({ padding: 0.2, includeHiddenNodes: true })
+      reactFlowInstance.fitView({ padding: 0.2, includeHiddenNodes: true })
     }, 100)
     return () => clearTimeout(timer)
-  }, [fitView])
+  }, [reactFlowInstance])
 
   const handleExportJSON = () => {
     const jsonData = JSON.stringify(data, null, 2)
@@ -205,11 +207,24 @@ const Flow: React.FC<DatabaseVisualizerProps> = ({ data }) => {
   }
 
   return (
-    <div className="h-[calc(100vh-12rem)]">
-      <div className="flex justify-between items-center mb-4 bg-card p-4 rounded-md">
-        <div className="flex space-x-2">
+    <div className="flex flex-col h-[calc(100vh-8rem)]">
+      <Collapsible open={isTextAnalysisOpen} onOpenChange={setIsTextAnalysisOpen} className="w-full mb-4">
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-4 bg-card text-card-foreground rounded-t-md">
+          <div className="flex items-center">
+            <AlignLeft className="h-5 w-5 mr-2" />
+            <h3 className="text-lg font-semibold">Text Analysis</h3>
+          </div>
+          {isTextAnalysisOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="p-4 bg-card text-card-foreground rounded-b-md">
+          <TextAnalysis data={data} />
+        </CollapsibleContent>
+      </Collapsible>
+
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 bg-card p-4 rounded-md">
+        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-2 md:mb-0">
           <Select onValueChange={setFilter} defaultValue="all">
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
             <SelectContent>
@@ -222,7 +237,7 @@ const Flow: React.FC<DatabaseVisualizerProps> = ({ data }) => {
             </SelectContent>
           </Select>
           <Select onValueChange={setSortBy} defaultValue="default">
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -236,37 +251,57 @@ const Flow: React.FC<DatabaseVisualizerProps> = ({ data }) => {
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-48"
+            className="w-full md:w-48"
           />
         </div>
-        <div className="flex space-x-2">
-          <Button onClick={handleExportJSON} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 w-full md:w-auto">
+          <Button onClick={handleExportJSON} className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white">
             <Download className="w-4 h-4 mr-2" />
             Export JSON
           </Button>
           <QuickJump headings={data.headings} pageUrl={data.url} />
         </div>
       </div>
-      <div className="flex">
-        <div className="w-3/4">
-          <ReactFlow
-            nodes={filteredNodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            fitView
-            fitViewOptions={{ padding: 0.2, includeHiddenNodes: true }}
-            minZoom={0.5}
-            maxZoom={1.5}
+      <div className="flex-grow min-h-[600px] relative">
+        <ReactFlow
+          nodes={filteredNodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.2, includeHiddenNodes: true }}
+          minZoom={0.5}
+          maxZoom={1.5}
+        >
+          <Background color="#4f46e5" gap={16} />
+        </ReactFlow>
+        <div className="absolute bottom-4 right-4 flex space-x-2 z-10">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => reactFlowInstance.fitView()}
+            className="bg-background/50 hover:bg-background/80"
           >
-            <Background color="#4f46e5" gap={16} />
-          </ReactFlow>
-        </div>
-        <div className="w-1/4 bg-card p-4 rounded-md ml-4 overflow-y-auto">
-          <TextAnalysis data={data} />
-          <WordCloud words={data.wordFrequency} />
+            <Maximize className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => reactFlowInstance.zoomIn()}
+            className="bg-background/50 hover:bg-background/80"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => reactFlowInstance.zoomOut()}
+            className="bg-background/50 hover:bg-background/80"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>
