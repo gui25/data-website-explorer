@@ -10,7 +10,7 @@ import { Info } from "lucide-react"
 import { clientScrapeUrl, type ScrapedData } from "@/utils/clientScraper"
 
 const Home: React.FC = () => {
-  const [url, setUrl] = useState("https://example.com")
+  const [url, setUrl] = useState("")
   const [scrapedData, setScrapedData] = useState<ScrapedData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
