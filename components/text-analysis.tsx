@@ -6,15 +6,38 @@ import { BarChart2, Book, Hash, Type } from "lucide-react"
 interface TextAnalysisProps {
   data: {
     paragraphs: string[]
+    headings: { level: string; text: string; content: string }[]
     wordFrequency: { [key: string]: number }
   }
 }
 
 const TextAnalysis: React.FC<TextAnalysisProps> = ({ data }) => {
-  const totalWords = data.paragraphs.join(" ").split(/\s+/).length
-  const uniqueWords = Object.keys(data.wordFrequency).length
-  const averageWordLength = Object.keys(data.wordFrequency).reduce((sum, word) => sum + word.length, 0) / uniqueWords
-  const mostCommonWords = Object.entries(data.wordFrequency)
+  const getTextContent = () => {
+    const headingContent = data.headings.map((heading) => `${heading.text} ${heading.content}`).join(" ")
+    const paragraphContent = data.paragraphs.join(" ")
+    return `${headingContent} ${paragraphContent}`
+  }
+
+  const getWordFrequency = (text: string) => {
+    const words = text.toLowerCase().match(/\b\w+\b/g) || []
+    return words.reduce(
+      (acc, word) => {
+        if (word.length > 1) {
+          acc[word] = (acc[word] || 0) + 1
+        }
+        return acc
+      },
+      {} as { [key: string]: number },
+    )
+  }
+
+  const textContent = getTextContent()
+  const filteredWordFrequency = getWordFrequency(textContent)
+
+  const totalWords = Object.values(filteredWordFrequency).reduce((sum, count) => sum + count, 0)
+  const uniqueWords = Object.keys(filteredWordFrequency).length
+  const averageWordLength = Object.keys(filteredWordFrequency).reduce((sum, word) => sum + word.length, 0) / uniqueWords
+  const mostCommonWords = Object.entries(filteredWordFrequency)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
 
